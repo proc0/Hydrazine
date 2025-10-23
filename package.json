@@ -1,0 +1,24 @@
+{
+  "name": "hydrazine",
+  "version": "0.0.1",
+  "description": "Hacker News clone",
+  "keywords": [
+    "Hacker",
+    "News"
+  ],
+  "homepage": "https://github.com/proc0/Hydrazine#readme",
+  "bugs": {
+    "url": "https://github.com/proc0/Hydrazine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/proc0/Hydrazine.git"
+  },
+  "license": "MIT",
+  "author": "proc0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
