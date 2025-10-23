@@ -9,7 +9,7 @@ const convertRequestBodyToFormUrlEncoded = (data) => {
   return str.join('&')
 }
 
-class Login {
+export class Login {
   BaseURL = 'https://news.ycombinator.com'
 
   logUser(username, password) {
