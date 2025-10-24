@@ -1,6 +1,6 @@
 window.onload = function () {
-  const model = new Model()
+  const client = new Client()
   const view = new View()
 
-  model.fetchItems('topstories', 3).then(view.renderItems)
+  client.fetchItems('topstories', 3).then(view.renderItems)
 }

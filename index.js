@@ -1,8 +1,8 @@
 import Koa from 'koa'
-import { Login } from './script/login.js'
+import { Server } from './script/server.js'
 
 const app = new Koa()
-const appLoggin = new Login()
+const server = new Server()
 // logger
 
 app.use(async (ctx, next) => {
@@ -15,7 +15,7 @@ app.use(async (ctx, next) => {
 
 app.use(async (ctx, next) => {
   const start = Date.now()
-  const res = await appLoggin.getUpvoteURL('45653143')
+  const res = await server.getUpvoteURL('45653143')
   await next()
   console.log(res)
   const ms = Date.now() - start

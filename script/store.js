@@ -1,0 +1,300 @@
+const BASE_NAME = 'hydrazine'
+const BASE_STORE = 'items'
+const BASE_VERSION = 1
+
+class Store {
+  //   connectedCallback() {
+  //   }
+
+  constructor() {
+    super()
+
+    const openRequest = window.indexedDB.open(BASE_NAME, BASE_VERSION)
+    openRequest.onerror = this.throwError('Initializing')
+    openRequest.onupgradeneeded = this.upgrade.bind(this)
+    openRequest.onsuccess = ({ target }) => {
+      console.log('Initialization complete.')
+      // save database reference
+      this.database = target.result
+      this.load()
+    }
+
+    // bind events
+    // this.addEventListener(EVENT_DELETE, this.delete.bind(this))
+    // this.saveEvents.forEach((eventName) => {
+    //   this.addEventListener(eventName, this.save.bind(this))
+    // })
+  }
+
+  //   addRoot({ detail }) {
+  //     let task = detail?.task
+
+  //     if (!task) {
+  //       // add default model
+  //       task = structuredClone(this.model)
+  //       // get new task path (order index of root)
+  //       const rootNodes = this.getRootNodes()
+  //       const lastIndex = rootNodes ? rootNodes.length - 1 : 0
+  //       const lastNodePath = rootNodes[lastIndex]?.task.path[0]
+  //       task.path = [lastNodePath ? lastNodePath + 1 : 0]
+  //     }
+
+  //     // save root task
+  //     this.transact('readwrite', (store) => {
+  //       const addRootRequest = store.add(task)
+  //       addRootRequest.onsuccess = ({ target }) => {
+  //         task.id = target.result
+  //         // another request to save the DB key in id
+  //         const putRequest = store.put(task, task.id)
+  //         putRequest.onerror = this.throwError('Adding Root')
+  //         putRequest.onsuccess = () => {
+  //           console.log(`Added root ${task.id}.`)
+  //           this.dispatch(EVENT_RENDER_ROOT, { task })
+  //         }
+  //       }
+
+  //       return addRootRequest
+  //     })
+  //   }
+
+  //   delete(event) {
+  //     const node = event.target
+  //     // root task
+  //     if (node.task.id) {
+  //       // bubbles up to task view
+  //       return this.transact('readwrite', (store) => {
+  //         const taskId = node.task.id
+  //         const deleteRequest = store.delete(taskId)
+  //         deleteRequest.onsuccess = () => console.log(`Deleted task ${taskId}.`)
+
+  //         return deleteRequest
+  //       })
+  //     }
+  //     // branch task
+  //     return this.save(event)
+  //   }
+
+  //   dispatch(eventName, detail) {
+  //     return this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }))
+  //   }
+
+  //   export() {
+  //     console.log('Exporting...')
+
+  //     this.transact('readonly', (store) => {
+  //       const readRequest = store.getAll()
+  //       readRequest.onsuccess = ({ target }) => {
+  //         const tasks = target.result
+  //         const a = document.createElement('a')
+  //         a.href = URL.createObjectURL(
+  //           new Blob([JSON.stringify(tasks, null, 2)], {
+  //             type: 'text/plain',
+  //           })
+  //         )
+  //         a.setAttribute('download', 'tasks.json')
+  //         this.appendChild(a)
+  //         a.click()
+  //         this.removeChild(a)
+  //       }
+
+  //       return readRequest
+  //     })
+  //   }
+
+  //   import() {
+  //     console.log('Importing...')
+
+  //     const input = document.createElement('input')
+  //     input.setAttribute('type', 'file')
+  //     input.addEventListener('change', (event) => {
+  //       const file = event.target.files[0]
+  //       if (!file) {
+  //         return this.throwError('Selecting file')
+  //       }
+
+  //       const reader = new FileReader()
+  //       reader.onerror = this.throwError(`Reading file ${file}`)
+  //       reader.onload = () => {
+  //         // parse tasks
+  //         const tasks = JSON.parse(reader.result)
+  //         // save tasks
+  //         this.transact('readwrite', (store) => {
+  //           tasks.forEach((task) => {
+  //             const addRequest = store.add(task, task.id)
+  //             addRequest.onerror = this.throwError('Importing')
+  //             addRequest.onsuccess = ({ target }) => {
+  //               console.log(`Imported task ${target.result}`)
+  //               this.dispatch(EVENT_RENDER_ROOT, { task })
+  //             }
+  //           })
+  //         })
+
+  //         input.remove()
+  //       }
+
+  //       reader.readAsText(file)
+  //     })
+
+  //     input.click()
+  //   }
+
+  load() {
+    console.log('Loading...')
+    this.transact('readonly', (store) => {
+      const loadRequest = store.getAll()
+      loadRequest.onsuccess = ({ target }) => {
+        console.log('Loading complete.')
+        // this.dispatch(EVENT_RENDER, { tasks: target.result })
+      }
+
+      return loadRequest
+    })
+  }
+
+  //   migrate(migration, target) {
+  //     if (!migration || !target.transaction) return
+  //     // version upgrade migration
+  //     const store = target.transaction.objectStore(BASE_STORE)
+  //     const cursorRequest = store.openCursor()
+  //     cursorRequest.onerror = this.throwError('Migrating')
+  //     cursorRequest.onsuccess = ({ target }) => {
+  //       const cursor = target.result
+  //       if (!cursor) {
+  //         return console.log('Migration complete.')
+  //       }
+  //       // migrate task and subtasks
+  //       const model = cursor.value
+  //       this.transformTask(migration, model)
+  //       // save task migration
+  //       const putRequest = store.put(model, model.id)
+  //       putRequest.onerror = this.throwError(`Migrating task ${model.id}`)
+  //       putRequest.onsuccess = (success) => {
+  //         console.log(`Migrated task ${success.target.result}.`)
+  //       }
+
+  //       cursor.continue()
+  //     }
+  //   }
+
+  save(event) {
+    // stop save events except expand,
+    // to allow view to handle it
+    if (event.type !== EVENT_EXPAND) {
+      event.stopPropagation()
+    }
+
+    // add new task if branching
+    let task = event.detail.task
+    if (event.type === EVENT_BRANCH) {
+      // create new task and add path
+      const newTask = structuredClone(this.model)
+      newTask.path = [...task.path, task.tree.length]
+      task.tree.push(newTask)
+      // open drawer
+      task.meta.opened = true
+    }
+
+    if (event.type === EVENT_STATUS) {
+      // limit history to prevent bloat
+      if (task.data.record.length > 99) {
+        task.data.record.splice(50)
+      }
+    }
+
+    if (event.type === EVENT_SYNC) {
+      // sync all task tree states
+      this.transformTask((sub) => {
+        sub.state = task.state
+      }, task)
+    }
+
+    let node = event.target
+    // when deleting or cloning a subtask
+    if (event.type === EVENT_DELETE || (event.type === EVENT_CLONE && !event.target.isRoot())) {
+      // grab the parent
+      node = event.target.parentElement
+    }
+
+    if (event.type == EVENT_CLONE) {
+      if (node.isRoot()) {
+        return this.addRoot({ detail: { task: node.task } })
+      } else {
+        node.task.tree.push(structuredClone(task))
+      }
+      node.updateSubPaths()
+      task = node.task
+    }
+
+    // grab root element
+    const root = event.target.getRootNode()
+    // save task
+    this.transact('readwrite', (store) => {
+      const putRequest = store.put(root.task, root.task.id)
+      putRequest.onsuccess = (success) => {
+        console.log(`Updated task ${success.target.result}`)
+        // skip render for expand event
+        if (event.type === EVENT_EXPAND) return
+        this.dispatch(EVENT_RENDER_BRANCH, { task, node })
+      }
+
+      return putRequest
+    })
+  }
+
+  //   seed(database) {
+  //     console.log('Seeding...')
+  //     // create an objectStore for tasks
+  //     const store = database.createObjectStore(BASE_STORE, {
+  //       keypath: 'id',
+  //       autoIncrement: true,
+  //     })
+  //     // create search indices
+  //     store.createIndex('name', 'name')
+  //     // prepare task seed
+  //     const taskSeed = structuredClone(TUTORIAL || this.model)
+  //     // root task
+  //     taskSeed.id = 1
+  //     // seed store
+  //     const seedRequest = store.add(taskSeed)
+  //     seedRequest.onerror = this.throwError('Seeding')
+  //     seedRequest.onsuccess = (event) => {
+  //       console.log('Seeding complete.')
+  //     }
+  //   }
+
+  throwError(context) {
+    return ({ target }) => {
+      throw new Error(`TaskBase Error: ${context}`, { cause: target.error })
+    }
+  }
+
+  transact(operation, order) {
+    const transaction = this.database.transaction(BASE_STORE, operation)
+    const store = transaction.objectStore(BASE_STORE)
+
+    const request = order(store)
+    if (request) {
+      request.onerror = this.throwError('Transaction')
+    }
+
+    return request
+  }
+
+  upgrade({ target }) {
+    console.log('Upgrade needed.')
+    const database = target.result
+    database.onerror = this.throwError('Upgrading')
+    // database does not exist
+    if (!database.objectStoreNames.contains(BASE_STORE)) {
+      this.seed(database)
+    } else {
+      // define migration function for version upgrades
+      // if (oldVersion === 1) { // get oldVersion from event.oldVersion
+      //   console.log(`Migrating version ${oldVersion} to ${database.version}.`)
+      //   migration = (task) => { /* modify task to new version here */ }
+      // }
+      let migration = null
+      this.migrate(migration, target)
+    }
+  }
+}
