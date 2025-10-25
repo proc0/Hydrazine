@@ -7,18 +7,16 @@ class Store {
   //   }
 
   constructor() {
-    super()
-
-    const openRequest = window.indexedDB.open(BASE_NAME, BASE_VERSION)
-    openRequest.onerror = this.throwError('Initializing')
-    openRequest.onupgradeneeded = this.upgrade.bind(this)
-    openRequest.onsuccess = ({ target }) => {
-      console.log('Initialization complete.')
-      // save database reference
-      this.database = target.result
-      this.load()
-    }
-
+    // super()
+    // const openRequest = window.indexedDB.open(BASE_NAME, BASE_VERSION)
+    // openRequest.onerror = this.throwError('Initializing')
+    // openRequest.onupgradeneeded = this.upgrade.bind(this)
+    // openRequest.onsuccess = ({ target }) => {
+    //   console.log('Initialization complete.')
+    //   // save database reference
+    //   this.database = target.result
+    // //   this.load()
+    // }
     // bind events
     // this.addEventListener(EVENT_DELETE, this.delete.bind(this))
     // this.saveEvents.forEach((eventName) => {

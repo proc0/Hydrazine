@@ -1,13 +1,28 @@
-class View {
-  renderItems(items) {
-    const ul = document.createElement('ul')
+class View extends HTMLElement {
+  model = null
+  page = null
 
-    items.forEach((item) => {
-      const li = document.createElement('li')
-      li.textContent = item.title
-      ul.appendChild(li)
+  connectedCallback() {
+    this.addEventListener('topstories', (event) => {
+      this.model.getItems('topstories', 3).then(event.detail.render)
     })
-
-    document.querySelector('main').appendChild(ul)
   }
+
+  constructor(model, page) {
+    super()
+    this.model = model
+    this.page = page
+  }
+
+  //   renderItems(items) {
+  //     const ul = document.createElement('ul')
+
+  //     items.forEach((item) => {
+  //       const li = document.createElement('li')
+  //       li.textContent = item.title
+  //       ul.appendChild(li)
+  //     })
+
+  //     this.appendChild(ul)
+  //   }
 }
