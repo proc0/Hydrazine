@@ -7,23 +7,24 @@ class Model {
     this.client = client
   }
 
-  getItems(endpoint, itemCount) {
-    return this.client.fetchIds(endpoint).then((ids) => {
-      return new Promise((resolve, reject) => {
-        this.store.find(ids[0], (item) => {
-          if (!item) {
-            return this.client.fetchItems([ids[0]]).then((items) => {
-              this.store.save(items[0], (itemId) => {
-                console.log('model saved Id')
-                resolve([items[0]])
+  getItems(endpoint, count) {
+    return this.client
+      .fetchIds(endpoint)
+      .then((ids) => ids.slice(0, count))
+      .then(this.store.findAll.bind(this.store))
+      .then(({ found, missing }) => {
+        return new Promise((resolve, reject) => {
+          return this.client.fetchItems(missing).then((items) => {
+            if (items.length) {
+              return this.store.saveAll(items).then((ids) => {
+                console.log(`Saved items ${ids.toString()}`)
+                return resolve(found.concat(items))
               })
-            })
-          }
-          return resolve([item])
-        })
+            }
 
-        return []
+            return found.length ? resolve(found) : reject(items)
+          })
+        })
       })
-    })
   }
 }

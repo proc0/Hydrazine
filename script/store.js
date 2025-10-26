@@ -13,24 +13,23 @@ class Store {
     }
   }
 
-  add(item, callback) {
-    // save root task
-    this.transact('readwrite', (store) => {
-      const addRequest = store.add(item, item.id)
-      addRequest.onsuccess = ({ target }) => {
-        console.log(`Added item ${target.result.id}.`)
-        callback(target.result)
-        // another request to save the DB key in id
-        // const putRequest = store.put(task, task.id)
-        // putRequest.onerror = this.throwError('Adding Root')
-        // putRequest.onsuccess = () => {
-        //   console.log(`Added root ${task.id}.`)
-        //   this.dispatch(EVENT_RENDER_ROOT, { task })
-        // }
-      }
+  add(item) {
+    return new Promise((resolve, reject) => {
+      this.transact('readwrite', (store) => {
+        const addRequest = store.add(item, item.id)
 
-      return addRequest
+        addRequest.onsuccess = ({ target }) => {
+          console.log(`Added item ${target.result.id}.`)
+          resolve(target.result)
+        }
+
+        return addRequest
+      })
     })
+  }
+
+  addAll(items) {
+    return Promise.all(items.forEach(this.add.bind(this)))
   }
 
   create(database) {
@@ -122,17 +121,27 @@ class Store {
   //     input.click()
   //   }
 
-  find(itemId, callback) {
-    this.transact('readonly', (store) => {
-      const getRequest = store.get(itemId)
-      getRequest.onsuccess = ({ target }) => {
-        callback(target.result)
-      }
+  find(id) {
+    return new Promise((resolve, reject) => {
+      this.transact('readonly', (store) => {
+        const getRequest = store.get(id)
 
-      return getRequest
+        getRequest.onsuccess = ({ target }) => {
+          resolve(target.result)
+        }
+
+        return getRequest
+      })
     })
   }
 
+  findAll(ids) {
+    return Promise.all(ids.map(this.find.bind(this))).then((items) => {
+      const resultIds = items.map((item) => item?.id)
+      const missing = ids.filter((id) => resultIds.filter((itemId) => itemId === id).length === 0)
+      return { found: items.filter((a) => a), missing }
+    })
+  }
   //   migrate(migration, target) {
   //     if (!migration || !target.transaction) return
   //     // version upgrade migration
@@ -158,16 +167,23 @@ class Store {
   //     }
   //   }
 
-  save(item, callback) {
-    this.transact('readwrite', (store) => {
-      const putRequest = store.put(item, item.id)
-      putRequest.onsuccess = (success) => {
-        console.log(`Saved item ${success.target.result}`)
-        callback(success.target.result)
-      }
+  save(item) {
+    return new Promise((resolve, reject) => {
+      this.transact('readwrite', (store) => {
+        const putRequest = store.put(item, item.id)
 
-      return putRequest
+        putRequest.onsuccess = (success) => {
+          console.log(`Saved item ${success.target.result}`)
+          resolve(success.target.result)
+        }
+
+        return putRequest
+      })
     })
+  }
+
+  saveAll(items) {
+    return Promise.all(items.map(this.save.bind(this)))
   }
 
   throwError(context) {
