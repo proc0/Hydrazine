@@ -19,7 +19,7 @@ class Model {
               return this.store.saveAll(items).then((ids) => {
                 console.log(`Saved items ${ids.toString()}`)
 
-                return resolve(found.concat(items))
+                return resolve(items.concat(found))
               })
             }
 
