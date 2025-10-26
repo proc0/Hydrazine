@@ -3,58 +3,44 @@ const BASE_STORE = 'items'
 const BASE_VERSION = 1
 
 class Store {
-  //   connectedCallback() {
-  //   }
-
   constructor() {
-    // super()
-    // const openRequest = window.indexedDB.open(BASE_NAME, BASE_VERSION)
-    // openRequest.onerror = this.throwError('Initializing')
-    // openRequest.onupgradeneeded = this.upgrade.bind(this)
-    // openRequest.onsuccess = ({ target }) => {
-    //   console.log('Initialization complete.')
-    //   // save database reference
-    //   this.database = target.result
-    // //   this.load()
-    // }
-    // bind events
-    // this.addEventListener(EVENT_DELETE, this.delete.bind(this))
-    // this.saveEvents.forEach((eventName) => {
-    //   this.addEventListener(eventName, this.save.bind(this))
-    // })
+    const openRequest = window.indexedDB.open(BASE_NAME, BASE_VERSION)
+    openRequest.onerror = this.throwError('Initializing')
+    openRequest.onupgradeneeded = this.upgrade.bind(this)
+    openRequest.onsuccess = ({ target }) => {
+      console.log('Initialization complete.')
+      this.database = target.result
+    }
   }
 
-  //   addRoot({ detail }) {
-  //     let task = detail?.task
+  add(item, callback) {
+    // save root task
+    this.transact('readwrite', (store) => {
+      const addRequest = store.add(item, item.id)
+      addRequest.onsuccess = ({ target }) => {
+        console.log(`Added item ${target.result.id}.`)
+        callback(target.result)
+        // another request to save the DB key in id
+        // const putRequest = store.put(task, task.id)
+        // putRequest.onerror = this.throwError('Adding Root')
+        // putRequest.onsuccess = () => {
+        //   console.log(`Added root ${task.id}.`)
+        //   this.dispatch(EVENT_RENDER_ROOT, { task })
+        // }
+      }
 
-  //     if (!task) {
-  //       // add default model
-  //       task = structuredClone(this.model)
-  //       // get new task path (order index of root)
-  //       const rootNodes = this.getRootNodes()
-  //       const lastIndex = rootNodes ? rootNodes.length - 1 : 0
-  //       const lastNodePath = rootNodes[lastIndex]?.task.path[0]
-  //       task.path = [lastNodePath ? lastNodePath + 1 : 0]
-  //     }
+      return addRequest
+    })
+  }
 
-  //     // save root task
-  //     this.transact('readwrite', (store) => {
-  //       const addRootRequest = store.add(task)
-  //       addRootRequest.onsuccess = ({ target }) => {
-  //         task.id = target.result
-  //         // another request to save the DB key in id
-  //         const putRequest = store.put(task, task.id)
-  //         putRequest.onerror = this.throwError('Adding Root')
-  //         putRequest.onsuccess = () => {
-  //           console.log(`Added root ${task.id}.`)
-  //           this.dispatch(EVENT_RENDER_ROOT, { task })
-  //         }
-  //       }
-
-  //       return addRootRequest
-  //     })
-  //   }
-
+  create(database) {
+    console.log('Creating store...')
+    // create an objectStore for items
+    const store = database.createObjectStore(BASE_STORE)
+    // create search indices
+    store.createIndex('id', 'id', { unique: true })
+    store.createIndex('name', 'name', { unique: false })
+  }
   //   delete(event) {
   //     const node = event.target
   //     // root task
@@ -136,16 +122,14 @@ class Store {
   //     input.click()
   //   }
 
-  load() {
-    console.log('Loading...')
+  find(itemId, callback) {
     this.transact('readonly', (store) => {
-      const loadRequest = store.getAll()
-      loadRequest.onsuccess = ({ target }) => {
-        console.log('Loading complete.')
-        // this.dispatch(EVENT_RENDER, { tasks: target.result })
+      const getRequest = store.get(itemId)
+      getRequest.onsuccess = ({ target }) => {
+        callback(target.result)
       }
 
-      return loadRequest
+      return getRequest
     })
   }
 
@@ -174,91 +158,17 @@ class Store {
   //     }
   //   }
 
-  save(event) {
-    // stop save events except expand,
-    // to allow view to handle it
-    if (event.type !== EVENT_EXPAND) {
-      event.stopPropagation()
-    }
-
-    // add new task if branching
-    let task = event.detail.task
-    if (event.type === EVENT_BRANCH) {
-      // create new task and add path
-      const newTask = structuredClone(this.model)
-      newTask.path = [...task.path, task.tree.length]
-      task.tree.push(newTask)
-      // open drawer
-      task.meta.opened = true
-    }
-
-    if (event.type === EVENT_STATUS) {
-      // limit history to prevent bloat
-      if (task.data.record.length > 99) {
-        task.data.record.splice(50)
-      }
-    }
-
-    if (event.type === EVENT_SYNC) {
-      // sync all task tree states
-      this.transformTask((sub) => {
-        sub.state = task.state
-      }, task)
-    }
-
-    let node = event.target
-    // when deleting or cloning a subtask
-    if (event.type === EVENT_DELETE || (event.type === EVENT_CLONE && !event.target.isRoot())) {
-      // grab the parent
-      node = event.target.parentElement
-    }
-
-    if (event.type == EVENT_CLONE) {
-      if (node.isRoot()) {
-        return this.addRoot({ detail: { task: node.task } })
-      } else {
-        node.task.tree.push(structuredClone(task))
-      }
-      node.updateSubPaths()
-      task = node.task
-    }
-
-    // grab root element
-    const root = event.target.getRootNode()
-    // save task
+  save(item, callback) {
     this.transact('readwrite', (store) => {
-      const putRequest = store.put(root.task, root.task.id)
+      const putRequest = store.put(item, item.id)
       putRequest.onsuccess = (success) => {
-        console.log(`Updated task ${success.target.result}`)
-        // skip render for expand event
-        if (event.type === EVENT_EXPAND) return
-        this.dispatch(EVENT_RENDER_BRANCH, { task, node })
+        console.log(`Saved item ${success.target.result}`)
+        callback(success.target.result)
       }
 
       return putRequest
     })
   }
-
-  //   seed(database) {
-  //     console.log('Seeding...')
-  //     // create an objectStore for tasks
-  //     const store = database.createObjectStore(BASE_STORE, {
-  //       keypath: 'id',
-  //       autoIncrement: true,
-  //     })
-  //     // create search indices
-  //     store.createIndex('name', 'name')
-  //     // prepare task seed
-  //     const taskSeed = structuredClone(TUTORIAL || this.model)
-  //     // root task
-  //     taskSeed.id = 1
-  //     // seed store
-  //     const seedRequest = store.add(taskSeed)
-  //     seedRequest.onerror = this.throwError('Seeding')
-  //     seedRequest.onsuccess = (event) => {
-  //       console.log('Seeding complete.')
-  //     }
-  //   }
 
   throwError(context) {
     return ({ target }) => {
@@ -284,15 +194,15 @@ class Store {
     database.onerror = this.throwError('Upgrading')
     // database does not exist
     if (!database.objectStoreNames.contains(BASE_STORE)) {
-      this.seed(database)
+      this.create(database)
     } else {
       // define migration function for version upgrades
       // if (oldVersion === 1) { // get oldVersion from event.oldVersion
       //   console.log(`Migrating version ${oldVersion} to ${database.version}.`)
       //   migration = (task) => { /* modify task to new version here */ }
       // }
-      let migration = null
-      this.migrate(migration, target)
+      // let migration = null
+      // this.migrate(migration, target)
     }
   }
 }

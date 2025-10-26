@@ -1,20 +1,19 @@
 class Client {
-  fetchItems(endpoint, itemCount) {
-    return fetch(this.getUrl(endpoint))
-      .then(this.handleResponse)
-      .then((ids) => {
-        const xhrCalls = []
-        for (let i = 0; i < itemCount; i++) {
-          xhrCalls.push(
-            fetch(this.getUrl(`item/${ids[i]}`))
-              .then(this.handleResponse)
-              .then(this.normalize)
-          )
-        }
+  fetchIds(endpoint) {
+    return fetch(this.getUrl(endpoint)).then(this.handleResponse).catch(this.catchError)
+  }
 
-        return Promise.all(xhrCalls)
-      })
-      .catch(this.catchError)
+  fetchItems(ids) {
+    const xhrCalls = []
+    for (let i = 0; i < ids.length; i++) {
+      xhrCalls.push(
+        fetch(this.getUrl(`item/${ids[i]}`))
+          .then(this.handleResponse)
+          .then(this.normalize)
+      )
+    }
+
+    return Promise.all(xhrCalls)
   }
 
   getUrl(uri) {
@@ -31,6 +30,7 @@ class Client {
 
   normalize(data) {
     return {
+      id: data.id,
       title: data.title,
     }
   }

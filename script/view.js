@@ -3,8 +3,8 @@ class View extends HTMLElement {
   page = null
 
   connectedCallback() {
-    this.addEventListener('topstories', (event) => {
-      this.model.getItems('topstories', 3).then(event.detail.render)
+    this.addEventListener('load', (event) => {
+      this.model.getItems(event.detail.endpoint, 3).then(event.detail.render)
     })
   }
 

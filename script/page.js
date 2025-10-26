@@ -5,7 +5,10 @@ class Page extends HTMLElement {
 
   connectedCallback() {
     this.dispatchEvent(
-      new CustomEvent('topstories', { bubbles: true, detail: { render: this.render.bind(this) } })
+      new CustomEvent('load', {
+        bubbles: true,
+        detail: { endpoint: 'topstories', render: this.render.bind(this) },
+      })
     )
   }
 
