@@ -8,7 +8,7 @@ class Store {
     openRequest.onerror = this.throwError('Initializing')
     openRequest.onupgradeneeded = this.upgrade.bind(this)
     openRequest.onsuccess = ({ target }) => {
-      console.log('Initialization complete.')
+      console.log('Initialized store.')
       this.database = target.result
     }
   }
@@ -29,97 +29,17 @@ class Store {
   }
 
   addAll(items) {
-    return Promise.all(items.forEach(this.add.bind(this)))
+    return Promise.all(items.map(this.add.bind(this)))
   }
 
-  create(database) {
+  createStore(database) {
     console.log('Creating store...')
-    // create an objectStore for items
+    // create an object store for items
     const store = database.createObjectStore(BASE_STORE)
     // create search indices
     store.createIndex('id', 'id', { unique: true })
-    store.createIndex('name', 'name', { unique: false })
+    store.createIndex('title', 'title', { unique: false })
   }
-  //   delete(event) {
-  //     const node = event.target
-  //     // root task
-  //     if (node.task.id) {
-  //       // bubbles up to task view
-  //       return this.transact('readwrite', (store) => {
-  //         const taskId = node.task.id
-  //         const deleteRequest = store.delete(taskId)
-  //         deleteRequest.onsuccess = () => console.log(`Deleted task ${taskId}.`)
-
-  //         return deleteRequest
-  //       })
-  //     }
-  //     // branch task
-  //     return this.save(event)
-  //   }
-
-  //   dispatch(eventName, detail) {
-  //     return this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, detail }))
-  //   }
-
-  //   export() {
-  //     console.log('Exporting...')
-
-  //     this.transact('readonly', (store) => {
-  //       const readRequest = store.getAll()
-  //       readRequest.onsuccess = ({ target }) => {
-  //         const tasks = target.result
-  //         const a = document.createElement('a')
-  //         a.href = URL.createObjectURL(
-  //           new Blob([JSON.stringify(tasks, null, 2)], {
-  //             type: 'text/plain',
-  //           })
-  //         )
-  //         a.setAttribute('download', 'tasks.json')
-  //         this.appendChild(a)
-  //         a.click()
-  //         this.removeChild(a)
-  //       }
-
-  //       return readRequest
-  //     })
-  //   }
-
-  //   import() {
-  //     console.log('Importing...')
-
-  //     const input = document.createElement('input')
-  //     input.setAttribute('type', 'file')
-  //     input.addEventListener('change', (event) => {
-  //       const file = event.target.files[0]
-  //       if (!file) {
-  //         return this.throwError('Selecting file')
-  //       }
-
-  //       const reader = new FileReader()
-  //       reader.onerror = this.throwError(`Reading file ${file}`)
-  //       reader.onload = () => {
-  //         // parse tasks
-  //         const tasks = JSON.parse(reader.result)
-  //         // save tasks
-  //         this.transact('readwrite', (store) => {
-  //           tasks.forEach((task) => {
-  //             const addRequest = store.add(task, task.id)
-  //             addRequest.onerror = this.throwError('Importing')
-  //             addRequest.onsuccess = ({ target }) => {
-  //               console.log(`Imported task ${target.result}`)
-  //               this.dispatch(EVENT_RENDER_ROOT, { task })
-  //             }
-  //           })
-  //         })
-
-  //         input.remove()
-  //       }
-
-  //       reader.readAsText(file)
-  //     })
-
-  //     input.click()
-  //   }
 
   find(id) {
     return new Promise((resolve, reject) => {
@@ -142,30 +62,31 @@ class Store {
       return { found: items.filter((a) => a), missing }
     })
   }
-  //   migrate(migration, target) {
-  //     if (!migration || !target.transaction) return
-  //     // version upgrade migration
-  //     const store = target.transaction.objectStore(BASE_STORE)
-  //     const cursorRequest = store.openCursor()
-  //     cursorRequest.onerror = this.throwError('Migrating')
-  //     cursorRequest.onsuccess = ({ target }) => {
-  //       const cursor = target.result
-  //       if (!cursor) {
-  //         return console.log('Migration complete.')
-  //       }
-  //       // migrate task and subtasks
-  //       const model = cursor.value
-  //       this.transformTask(migration, model)
-  //       // save task migration
-  //       const putRequest = store.put(model, model.id)
-  //       putRequest.onerror = this.throwError(`Migrating task ${model.id}`)
-  //       putRequest.onsuccess = (success) => {
-  //         console.log(`Migrated task ${success.target.result}.`)
-  //       }
 
-  //       cursor.continue()
-  //     }
-  //   }
+  migrate(migration, target) {
+    if (!migration || !target.transaction) return
+    // version upgrade migration
+    const store = target.transaction.objectStore(BASE_STORE)
+    const cursorRequest = store.openCursor()
+    cursorRequest.onerror = this.throwError('Migration')
+    cursorRequest.onsuccess = ({ target }) => {
+      const cursor = target.result
+      if (!cursor) {
+        return console.log('Migration complete.')
+      }
+      // migrate item
+      const item = cursor.value
+      const migrated = migration(item)
+      // save item
+      const putRequest = store.put(migrated, migrated.id)
+      putRequest.onerror = this.throwError(`Migrating task ${migrated.id}`)
+      putRequest.onsuccess = (success) => {
+        console.log(`Migrated item ${success.target.result}.`)
+      }
+
+      cursor.continue()
+    }
+  }
 
   save(item) {
     return new Promise((resolve, reject) => {
@@ -188,7 +109,7 @@ class Store {
 
   throwError(context) {
     return ({ target }) => {
-      throw new Error(`TaskBase Error: ${context}`, { cause: target.error })
+      throw new Error(`Store Error: ${context}`, { cause: target.error })
     }
   }
 
@@ -205,20 +126,23 @@ class Store {
   }
 
   upgrade({ target }) {
-    console.log('Upgrade needed.')
+    console.log('Upgrading schema...')
     const database = target.result
-    database.onerror = this.throwError('Upgrading')
-    // database does not exist
+    database.onerror = this.throwError('Upgrade')
+    // object store does not exist
     if (!database.objectStoreNames.contains(BASE_STORE)) {
-      this.create(database)
+      this.createStore(database)
     } else {
       // define migration function for version upgrades
-      // if (oldVersion === 1) { // get oldVersion from event.oldVersion
+      // if (oldVersion === 1) {
+      //   // get oldVersion from event.oldVersion
       //   console.log(`Migrating version ${oldVersion} to ${database.version}.`)
-      //   migration = (task) => { /* modify task to new version here */ }
+      //   migration = (task) => {
+      //     /* modify task to new version here */
+      //   }
       // }
-      // let migration = null
-      // this.migrate(migration, target)
+      let migration = null
+      this.migrate(migration, target)
     }
   }
 }
