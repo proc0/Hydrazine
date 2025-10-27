@@ -13,14 +13,24 @@ class Page extends HTMLElement {
   }
 
   render(items) {
-    const ul = document.createElement('ul')
-
     items.forEach((item) => {
-      const li = document.createElement('li')
-      li.textContent = item.title
-      ul.appendChild(li)
+      this.appendChild(this.renderItem(item))
     })
+  }
 
-    this.appendChild(ul)
+  renderItem(item) {
+    const details = document.createElement('details')
+    const summary = document.createElement('summary')
+    const section = document.createElement('section')
+    const title = document.createElement('h1')
+
+    title.textContent = item.title
+    section.textContent = 'comments'
+
+    summary.append(title)
+    details.append(summary)
+    details.append(section)
+
+    return details
   }
 }
