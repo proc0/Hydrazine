@@ -24,15 +24,12 @@ class Client {
     if (!response.ok) {
       throw new Error(`Item fetch Error: ${response.status}`)
     }
-    // TODO: .text(), .blob(), etc., depending on the response type
+
     return response.json()
   }
 
   normalize(data) {
-    return {
-      id: data.id,
-      title: data.title,
-    }
+    return data
   }
 
   catchError(error) {

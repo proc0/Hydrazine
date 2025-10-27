@@ -6,6 +6,9 @@ class View extends HTMLElement {
     this.addEventListener('load', (event) => {
       this.model.getItems(event.detail.endpoint, 3).then(event.detail.render)
     })
+    this.addEventListener('load-kids', (event) => {
+      this.model.getKids(event.detail.item, 3).then(event.detail.render)
+    })
   }
 
   constructor(model, page) {

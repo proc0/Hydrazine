@@ -5,3 +5,18 @@ body {
   background-color: #222;
   color: #eee;
 }
+
+details {
+  display: flex;
+  flex-direction: column;
+  margin-left: 1rem;
+
+  summary {
+    display: inline-flex;
+  }
+
+  section {
+    display: flex;
+    flex-direction: column;
+  }
+}

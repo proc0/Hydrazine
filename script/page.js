@@ -7,30 +7,52 @@ class Page extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent('load', {
         bubbles: true,
-        detail: { endpoint: 'topstories', render: this.render.bind(this) },
+        detail: { endpoint: 'topstories', render: this.render(this) },
       })
     )
   }
 
-  render(items) {
-    items.forEach((item) => {
-      this.appendChild(this.renderItem(item))
-    })
+  render(parent) {
+    return function (items) {
+      items.forEach((item) => {
+        parent.appendChild(this.renderItem(item))
+      })
+    }.bind(this)
   }
 
   renderItem(item) {
     const details = document.createElement('details')
     const summary = document.createElement('summary')
     const section = document.createElement('section')
-    const title = document.createElement('h1')
 
-    title.textContent = item.title
-    section.textContent = 'comments'
+    if (item.title) {
+      const title = document.createElement('h1')
+      title.textContent = item.title
+      summary.append(title)
+    } else {
+      details.setAttribute('open', '')
+    }
 
-    summary.append(title)
+    if (item.text) {
+      const comment = document.createElement('p')
+      comment.innerHTML = item.text
+      section.append(comment)
+    }
+
     details.append(summary)
     details.append(section)
 
+    details.addEventListener('click', (event) => {
+      event.stopImmediatePropagation()
+      if (details.open) {
+        details.dispatchEvent(
+          new CustomEvent('load-kids', {
+            bubbles: true,
+            detail: { item, render: this.render(details) },
+          })
+        )
+      }
+    })
     return details
   }
 }
