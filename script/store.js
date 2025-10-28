@@ -1,42 +1,21 @@
-const BASE_NAME = 'hydrazine'
-const BASE_STORE = 'items'
-const BASE_VERSION = 1
-
 class Store {
+  static DB_NAME = 'hydrazine'
+  static STORE_NAME = 'items'
+  static VERSION = 1
+  static CACHE_LIFE = 15 * 60 * 1000
+
   constructor() {
-    const openRequest = window.indexedDB.open(BASE_NAME, BASE_VERSION)
+    const openRequest = window.indexedDB.open(Store.DB_NAME, Store.VERSION)
     openRequest.onerror = this.throwError('Initializing')
     openRequest.onupgradeneeded = this.upgrade.bind(this)
     openRequest.onsuccess = ({ target }) => {
-      console.log('Initialized store.')
       this.database = target.result
     }
   }
 
-  add(item) {
-    return new Promise((resolve, reject) => {
-      this.transact('readwrite', (store) => {
-        const addRequest = store.add(item, item.id)
-
-        addRequest.onsuccess = ({ target }) => {
-          console.log(`Added item ${target.result.id}.`)
-          resolve(target.result)
-        }
-
-        return addRequest
-      })
-    })
-  }
-
-  addAll(items) {
-    return Promise.all(items.map(this.add.bind(this)))
-  }
-
   createStore(database) {
     console.log('Creating store...')
-    // create an object store for items
-    const store = database.createObjectStore(BASE_STORE)
-    // create search indices
+    const store = database.createObjectStore(Store.STORE_NAME)
     store.createIndex('id', 'id', { unique: true })
     store.createIndex('title', 'title', { unique: false })
   }
@@ -55,18 +34,23 @@ class Store {
     })
   }
 
-  findAll(ids) {
+  retrieve(ids) {
     return Promise.all(ids.map(this.find.bind(this))).then((items) => {
-      const resultIds = items.map((item) => item?.id)
-      const missing = ids.filter((id) => resultIds.filter((itemId) => itemId === id).length === 0)
-      return { found: items.filter((a) => a), missing }
+      const foundItems = items.filter(
+        (item) => item && Date.now() - item.savedAt < Store.CACHE_LIFE
+      )
+      const missingIds = ids.filter(
+        (id) => foundItems.filter((item) => item.id === id).length === 0
+      )
+
+      return { foundItems, missingIds }
     })
   }
 
   migrate(migration, target) {
     if (!migration || !target.transaction) return
     // version upgrade migration
-    const store = target.transaction.objectStore(BASE_STORE)
+    const store = target.transaction.objectStore(Store.STORE_NAME)
     const cursorRequest = store.openCursor()
     cursorRequest.onerror = this.throwError('Migration')
     cursorRequest.onsuccess = ({ target }) => {
@@ -92,14 +76,13 @@ class Store {
     return new Promise((resolve, reject) => {
       this.transact('readwrite', (store) => {
         item.savedAt = Date.now()
-        const putRequest = store.put(item, item.id)
 
-        putRequest.onsuccess = (success) => {
-          console.log(`Saved item ${success.target.result}`)
+        const saveRequest = store.put(item, item.id)
+        saveRequest.onsuccess = (success) => {
           resolve(success.target.result)
         }
 
-        return putRequest
+        return saveRequest
       })
     })
   }
@@ -115,8 +98,8 @@ class Store {
   }
 
   transact(operation, order) {
-    const transaction = this.database.transaction(BASE_STORE, operation)
-    const store = transaction.objectStore(BASE_STORE)
+    const transaction = this.database.transaction(Store.STORE_NAME, operation)
+    const store = transaction.objectStore(Store.STORE_NAME)
 
     const request = order(store)
     if (request) {
@@ -126,24 +109,20 @@ class Store {
     return request
   }
 
-  upgrade({ target }) {
-    console.log('Upgrading schema...')
+  upgrade({ target, oldVersion }) {
     const database = target.result
     database.onerror = this.throwError('Upgrade')
     // object store does not exist
-    if (!database.objectStoreNames.contains(BASE_STORE)) {
+    if (!database.objectStoreNames.contains(Store.STORE_NAME)) {
       this.createStore(database)
-    } else {
-      // define migration function for version upgrades
-      // if (oldVersion === 1) {
-      //   // get oldVersion from event.oldVersion
-      //   console.log(`Migrating version ${oldVersion} to ${database.version}.`)
-      //   migration = (task) => {
-      //     /* modify task to new version here */
-      //   }
-      // }
-      let migration = null
-      this.migrate(migration, target)
+    } else if (database.version !== Store.VERSION) {
+      console.log(`Migrating version ${oldVersion} to ${database.version}.`)
+      // version to migrate
+      if (oldVersion === 1) {
+        // migration = (task) => { /* modify task to new version here */ }
+        let migration = null
+        this.migrate(migration, target)
+      }
     }
   }
 }

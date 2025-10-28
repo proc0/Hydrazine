@@ -1,6 +1,6 @@
 class Client {
   fetchIds(endpoint) {
-    return fetch(this.getUrl(endpoint)).then(this.handleResponse).catch(this.catchError)
+    return fetch(this.getUrl(endpoint)).then(this.receive).catch(this.logError)
   }
 
   fetchItems(ids) {
@@ -8,7 +8,7 @@ class Client {
     for (let i = 0; i < ids.length; i++) {
       xhrCalls.push(
         fetch(this.getUrl(`item/${ids[i]}`))
-          .then(this.handleResponse)
+          .then(this.receive)
           .then(this.normalize)
       )
     }
@@ -20,7 +20,7 @@ class Client {
     return `https://hacker-news.firebaseio.com/v0/${uri}.json`
   }
 
-  handleResponse(response) {
+  receive(response) {
     if (!response.ok) {
       throw new Error(`Item fetch Error: ${response.status}`)
     }
@@ -32,7 +32,7 @@ class Client {
     return data
   }
 
-  catchError(error) {
-    console.error('Fetch error:', error)
+  logError(error) {
+    console.error('Client Error:', error)
   }
 }
