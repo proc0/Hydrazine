@@ -7,18 +7,18 @@ class Model {
     this.client = client
   }
 
-  getItems(endpoint, count) {
+  getItems(endpoint, cursor, count) {
     return this.client
       .fetchIds(endpoint)
-      .then((ids) => ids.slice(0, count))
+      .then((ids) => ids.splice(cursor, count))
       .then(this.store.retrieve.bind(this.store))
       .then(this.reclaim.bind(this))
   }
 
-  getKids(item, count) {
+  getKids(item, cursor, count) {
     if (!item.kids?.length) return this.wrap(this.wrap([]))
 
-    return this.store.retrieve(item.kids.splice(0, count)).then(this.reclaim.bind(this))
+    return this.store.retrieve(item.kids.splice(cursor, count)).then(this.reclaim.bind(this))
   }
 
   reclaim({ foundItems, missingIds }) {

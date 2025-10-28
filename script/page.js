@@ -7,31 +7,48 @@ class Page extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent('load', {
         bubbles: true,
-        detail: { endpoint: 'topstories', render: this.render(this) },
+        detail: { cursor: 0, count: 3, endpoint: 'topstories', render: this.render(this) },
       })
     )
   }
 
-  render(parent) {
+  render(parent, parentItem) {
     return function (items) {
       items.forEach((item) => {
         const post = this.renderItem(item)
         parent.appendChild(post)
-
-        if (item.kids?.length) {
-          const moreButton = document.createElement('button')
-          moreButton.textContent = 'More'
-          moreButton.addEventListener('click', (event) => {
-            post.dispatchEvent(
-              new CustomEvent('load-kids', {
-                bubbles: true,
-                detail: { item, render: this.render(post) },
-              })
-            )
-          })
-          post.append(moreButton)
+      })
+      parent.querySelector('button')?.remove()
+      const moreButton = document.createElement('button')
+      moreButton.textContent = 'More'
+      moreButton.addEventListener('click', (event) => {
+        if (parentItem) {
+          parent.dispatchEvent(
+            new CustomEvent('load-kids', {
+              bubbles: true,
+              detail: {
+                cursor: parent.querySelectorAll('& > details')?.length || 0,
+                count: 3,
+                item: parentItem,
+                render: this.render(parent, parentItem),
+              },
+            })
+          )
+        } else {
+          parent.dispatchEvent(
+            new CustomEvent('load', {
+              bubbles: true,
+              detail: {
+                cursor: this.querySelectorAll('& > details')?.length || 0,
+                count: 3,
+                endpoint: 'topstories',
+                render: this.render(parent),
+              },
+            })
+          )
         }
       })
+      parent.append(moreButton)
     }.bind(this)
   }
 
@@ -39,6 +56,8 @@ class Page extends HTMLElement {
     const details = document.createElement('details')
     const summary = document.createElement('summary')
     const section = document.createElement('section')
+
+    details.setAttribute('id', item.id)
 
     if (item.title) {
       const title = document.createElement('h1')
@@ -67,7 +86,7 @@ class Page extends HTMLElement {
         details.dispatchEvent(
           new CustomEvent('load-kids', {
             bubbles: true,
-            detail: { item, render: this.render(details) },
+            detail: { cursor: 0, count: 3, item, render: this.render(details, item) },
           })
         )
       }

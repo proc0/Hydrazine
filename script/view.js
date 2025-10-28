@@ -3,11 +3,11 @@ class View extends HTMLElement {
   page = null
 
   connectedCallback() {
-    this.addEventListener('load', (event) => {
-      this.model.getItems(event.detail.endpoint, 3).then(event.detail.render)
+    this.addEventListener('load', ({ detail }) => {
+      this.model.getItems(detail.endpoint, detail.cursor, detail.count).then(detail.render)
     })
-    this.addEventListener('load-kids', (event) => {
-      this.model.getKids(event.detail.item, 3).then(event.detail.render)
+    this.addEventListener('load-kids', ({ detail }) => {
+      this.model.getKids(detail.item, detail.cursor, detail.count).then(detail.render)
     })
   }
 
