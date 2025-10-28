@@ -15,7 +15,22 @@ class Page extends HTMLElement {
   render(parent) {
     return function (items) {
       items.forEach((item) => {
-        parent.appendChild(this.renderItem(item))
+        const post = this.renderItem(item)
+        parent.appendChild(post)
+
+        if (item.kids?.length) {
+          const moreButton = document.createElement('button')
+          moreButton.textContent = 'More'
+          moreButton.addEventListener('click', (event) => {
+            post.dispatchEvent(
+              new CustomEvent('load-kids', {
+                bubbles: true,
+                detail: { item, render: this.render(post) },
+              })
+            )
+          })
+          post.append(moreButton)
+        }
       })
     }.bind(this)
   }
@@ -57,21 +72,6 @@ class Page extends HTMLElement {
         )
       }
     })
-
-    if (item.kids?.length) {
-      const moreButton = document.createElement('button')
-      moreButton.textContent = 'More'
-      moreButton.addEventListener('click', (event) => {
-        details.dispatchEvent(
-          new CustomEvent('load-kids', {
-            bubbles: true,
-            detail: { item, render: this.render(details) },
-          })
-        )
-      })
-
-      details.append(moreButton)
-    }
 
     return details
   }

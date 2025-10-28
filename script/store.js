@@ -91,6 +91,7 @@ class Store {
   save(item) {
     return new Promise((resolve, reject) => {
       this.transact('readwrite', (store) => {
+        item.savedAt = Date.now()
         const putRequest = store.put(item, item.id)
 
         putRequest.onsuccess = (success) => {
