@@ -30,7 +30,7 @@ class Model {
   }
 
   getKids(item, count) {
-    if (!item.kids) return new Promise((resolve) => resolve([]))
+    if (!item.kids) return new Promise((resolve) => resolve(new Promise((resolve) => resolve([]))))
 
     return this.store.findAll(item.kids.splice(0, count)).then(({ found, missing }) => {
       return new Promise((resolve, reject) => {

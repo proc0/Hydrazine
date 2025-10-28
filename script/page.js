@@ -30,6 +30,10 @@ class Page extends HTMLElement {
       title.textContent = item.title
       summary.append(title)
     } else {
+      const subtitle = document.createElement('span')
+      const commentDate = new Date(item.time)
+      subtitle.textContent = `${item.by} ${commentDate.toLocaleString()}`
+      summary.append(subtitle)
       details.setAttribute('open', '')
     }
 
@@ -44,7 +48,7 @@ class Page extends HTMLElement {
 
     details.addEventListener('click', (event) => {
       event.stopImmediatePropagation()
-      if (details.open) {
+      if (!details.open) {
         details.dispatchEvent(
           new CustomEvent('load-kids', {
             bubbles: true,
@@ -53,6 +57,22 @@ class Page extends HTMLElement {
         )
       }
     })
+
+    if (item.kids?.length) {
+      const moreButton = document.createElement('button')
+      moreButton.textContent = 'More'
+      moreButton.addEventListener('click', (event) => {
+        details.dispatchEvent(
+          new CustomEvent('load-kids', {
+            bubbles: true,
+            detail: { item, render: this.render(details) },
+          })
+        )
+      })
+
+      details.append(moreButton)
+    }
+
     return details
   }
 }
