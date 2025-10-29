@@ -9,7 +9,7 @@ body {
 details {
   display: flex;
   flex-direction: column;
-  margin-left: 1rem;
+  margin-left: 2rem;
 
   summary {
     display: inline-flex;

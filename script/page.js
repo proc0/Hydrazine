@@ -7,49 +7,24 @@ class Page extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent('load', {
         bubbles: true,
-        detail: { cursor: 0, count: 3, endpoint: 'topstories', render: this.render(this) },
+        detail: { cursor: 0, count: 3, resource: 'topstories' },
       })
     )
   }
 
-  render(parent, parentItem) {
-    return function (items) {
+  render(parent) {
+    return (items) => {
+      const moreButton = parent.querySelector('& > button')
+
       items.forEach((item) => {
         const post = this.renderItem(item)
-        parent.appendChild(post)
-      })
-      parent.querySelector('button')?.remove()
-      const moreButton = document.createElement('button')
-      moreButton.textContent = 'More'
-      moreButton.addEventListener('click', (event) => {
-        if (parentItem) {
-          parent.dispatchEvent(
-            new CustomEvent('load-kids', {
-              bubbles: true,
-              detail: {
-                cursor: parent.querySelectorAll('& > details')?.length || 0,
-                count: 3,
-                item: parentItem,
-                render: this.render(parent, parentItem),
-              },
-            })
-          )
+        if (moreButton) {
+          parent.insertBefore(post, moreButton)
         } else {
-          parent.dispatchEvent(
-            new CustomEvent('load', {
-              bubbles: true,
-              detail: {
-                cursor: this.querySelectorAll('& > details')?.length || 0,
-                count: 3,
-                endpoint: 'topstories',
-                render: this.render(parent),
-              },
-            })
-          )
+          parent.append(post)
         }
       })
-      parent.append(moreButton)
-    }.bind(this)
+    }
   }
 
   renderItem(item) {
@@ -72,7 +47,7 @@ class Page extends HTMLElement {
     }
 
     if (item.text) {
-      const comment = document.createElement('p')
+      const comment = document.createElement('div')
       comment.innerHTML = item.text
       section.append(comment)
     }
@@ -80,15 +55,36 @@ class Page extends HTMLElement {
     details.append(summary)
     details.append(section)
 
-    details.addEventListener('click', (event) => {
-      event.stopImmediatePropagation()
-      if (!details.open) {
+    let moreButton
+    if (item.kids?.length > 0) {
+      details.querySelector('& > button')?.remove()
+      moreButton = document.createElement('button')
+      moreButton.textContent = 'Comments'
+      moreButton.addEventListener('click', (event) => {
+        const totalKids = details.querySelectorAll('& > details')?.length || 0
         details.dispatchEvent(
           new CustomEvent('load-kids', {
             bubbles: true,
-            detail: { cursor: 0, count: 3, item, render: this.render(details, item) },
+            detail: {
+              cursor: totalKids === 0 ? 0 : totalKids - 1,
+              count: 3,
+              resource: item,
+            },
           })
         )
+
+        if (item.kids.length - 1 === totalKids) {
+          moreButton.remove()
+        }
+      })
+
+      details.append(moreButton)
+    }
+
+    details.addEventListener('click', (event) => {
+      event.stopImmediatePropagation()
+      if (!details.open && !details.querySelectorAll('& > details')?.length && moreButton) {
+        moreButton.click()
       }
     })
 
