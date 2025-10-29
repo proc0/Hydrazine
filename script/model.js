@@ -7,6 +7,16 @@ class Model {
     this.client = client
   }
 
+  getIds(cursor, count, resource) {
+    if (typeof resource === 'object' && resource.kids?.length) {
+      return this.wrap(resource.kids.splice(cursor, count))
+    } else if (typeof resource === 'string') {
+      return this.client.fetchIds(endpoint).then((ids) => ids.splice(cursor, count))
+    } else {
+      return this.wrap(this.wrap([]))
+    }
+  }
+
   getItems(endpoint, cursor, count) {
     return this.client
       .fetchIds(endpoint)
