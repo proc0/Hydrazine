@@ -17,24 +17,10 @@ class Model {
     }
   }
 
-  getStuff(cursor, count, resource) {
+  getItems(cursor, count, resource) {
     return this.getIds(cursor, count, resource)
       .then(this.store.retrieve.bind(this.store))
       .then(this.reclaim.bind(this))
-  }
-
-  getItems(endpoint, cursor, count) {
-    return this.client
-      .fetchIds(endpoint)
-      .then((ids) => ids.splice(cursor, count))
-      .then(this.store.retrieve.bind(this.store))
-      .then(this.reclaim.bind(this))
-  }
-
-  getKids(item, cursor, count) {
-    if (!item.kids?.length) return this.wrap(this.wrap([]))
-
-    return this.store.retrieve(item.kids.splice(cursor, count)).then(this.reclaim.bind(this))
   }
 
   reclaim({ foundItems, missingIds }) {

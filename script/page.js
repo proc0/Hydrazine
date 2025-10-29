@@ -63,7 +63,7 @@ class Page extends HTMLElement {
       moreButton.addEventListener('click', (event) => {
         const totalKids = details.querySelectorAll('& > details')?.length || 0
         details.dispatchEvent(
-          new CustomEvent('load-kids', {
+          new CustomEvent('load', {
             bubbles: true,
             detail: {
               cursor: totalKids === 0 ? 0 : totalKids - 1,
