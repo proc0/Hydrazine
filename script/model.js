@@ -8,12 +8,12 @@ class Model {
   }
 
   getIds(cursor, count, resource) {
-    if (typeof resource === 'object' && resource.kids?.length) {
-      return this.wrap(resource.kids.slice(cursor, cursor + count))
-    } else if (typeof resource === 'string') {
-      return this.client.fetchIds(resource).then((ids) => ids.slice(cursor, cursor + count))
+    if (resource instanceof Resource) {
+      return this.client.fetchIds(resource.url).then((ids) => ids.slice(cursor, cursor + count))
+    } else if (typeof resource === 'number') {
+      return this.store.find(resource).then((item) => item.kids.slice(cursor, cursor + count))
     } else {
-      return this.wrap(this.wrap([]))
+      return this.unit(this.unit([]))
     }
   }
 
@@ -37,7 +37,7 @@ class Model {
     })
   }
 
-  wrap(result) {
+  unit(result) {
     return new Promise((resolve) => resolve(result))
   }
 }

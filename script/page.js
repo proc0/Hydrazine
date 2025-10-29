@@ -7,9 +7,40 @@ class Page extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent('load', {
         bubbles: true,
-        detail: { cursor: 0, count: 3, resource: 'topstories' },
+        detail: { cursor: 0, count: 3, resource: Resource.Top },
       })
     )
+  }
+
+  onLoadMore({ target }) {
+    const post = target.parentElement
+    const loadButton = post.querySelector('& > button')
+    const totalKids = post.querySelectorAll('& > details')?.length || 0
+    const itemId = post.getAttribute('id')
+    const kidsLength = Number(post.getAttribute('data-kids'))
+    post.dispatchEvent(
+      new CustomEvent('load', {
+        bubbles: true,
+        detail: {
+          cursor: totalKids === 0 ? 0 : totalKids - 1,
+          count: 3,
+          resource: Number(itemId),
+        },
+      })
+    )
+
+    if (kidsLength - 1 === totalKids && loadButton) {
+      loadButton.remove()
+    }
+  }
+
+  onExpand(event) {
+    event.stopImmediatePropagation()
+    const details = event.currentTarget
+    const moreButton = details.querySelector('& > button')
+    if (!details.open && !details.querySelectorAll('& > details')?.length && moreButton) {
+      moreButton.click()
+    }
   }
 
   render(parent) {
@@ -33,6 +64,7 @@ class Page extends HTMLElement {
     const section = document.createElement('section')
 
     details.setAttribute('id', item.id)
+    details.setAttribute('data-kids', item.kids?.length || 0)
 
     if (item.title) {
       const title = document.createElement('h1')
@@ -55,38 +87,14 @@ class Page extends HTMLElement {
     details.append(summary)
     details.append(section)
 
-    let moreButton
     if (item.kids?.length > 0) {
-      details.querySelector('& > button')?.remove()
-      moreButton = document.createElement('button')
+      const moreButton = document.createElement('button')
       moreButton.textContent = 'Comments'
-      moreButton.addEventListener('click', (event) => {
-        const totalKids = details.querySelectorAll('& > details')?.length || 0
-        details.dispatchEvent(
-          new CustomEvent('load', {
-            bubbles: true,
-            detail: {
-              cursor: totalKids === 0 ? 0 : totalKids - 1,
-              count: 3,
-              resource: item,
-            },
-          })
-        )
-
-        if (item.kids.length - 1 === totalKids) {
-          moreButton.remove()
-        }
-      })
-
       details.append(moreButton)
-    }
 
-    details.addEventListener('click', (event) => {
-      event.stopImmediatePropagation()
-      if (!details.open && !details.querySelectorAll('& > details')?.length && moreButton) {
-        moreButton.click()
-      }
-    })
+      moreButton.addEventListener('click', this.onLoadMore)
+      details.addEventListener('click', this.onExpand)
+    }
 
     return details
   }

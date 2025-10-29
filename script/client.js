@@ -1,3 +1,16 @@
+class Resource {
+  static Top = new Resource('topstories')
+  static New = new Resource('newstories')
+  static Best = new Resource('beststories')
+  static Ask = new Resource('askstories')
+  static Show = new Resource('showstories')
+  static Job = new Resource('jobstories')
+
+  constructor(url) {
+    this.url = url
+  }
+}
+
 class Client {
   fetchIds(endpoint) {
     return fetch(this.getUrl(endpoint)).then(this.receive).catch(this.logError)
