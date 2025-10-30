@@ -19,7 +19,7 @@ class Page extends HTMLElement {
     const itemId = post.getAttribute('id')
     const numItemKids = Number(post.getAttribute('data-kids'))
     const numKidsToFetch = numItemKids - numChildPosts
-    const remaining = numKidsToFetch > 0 ? numKidsToFetch : 0
+    const remaining = numKidsToFetch > 0 ? numItemKids - numKidsToFetch : 0
     post.setAttribute('data-kids', remaining)
 
     if (remaining === 0 && loadButton) {
