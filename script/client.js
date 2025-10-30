@@ -17,16 +17,13 @@ class Client {
   }
 
   static fetchItems(ids) {
-    const xhrCalls = []
-    for (let i = 0; i < ids.length; i++) {
-      xhrCalls.push(
-        fetch(Client.getUrl(`item/${ids[i]}`))
+    return Promise.all(
+      ids.map((id) =>
+        fetch(Client.getUrl(`item/${id}`))
           .then(Client.receive)
           .then(Client.normalize)
       )
-    }
-
-    return Promise.all(xhrCalls)
+    )
   }
 
   static getUrl(uri) {
