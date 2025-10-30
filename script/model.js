@@ -1,15 +1,9 @@
 class Model {
-  store = null
-  client = null
-
-  constructor(store, client) {
-    this.store = store
-    this.client = client
-  }
+  store = new Store()
 
   getIds(cursor, count, resource) {
     if (resource instanceof Resource) {
-      return this.client.fetchIds(resource.url).then((ids) => ids.slice(cursor, cursor + count))
+      return Client.fetchIds(resource.url).then((ids) => ids.slice(cursor, cursor + count))
     } else if (typeof resource === 'number') {
       return this.store.find(resource).then((item) => item.kids.slice(cursor, cursor + count))
     } else {
@@ -25,7 +19,7 @@ class Model {
 
   reclaim({ foundItems, missingIds }) {
     return new Promise((resolve, reject) => {
-      return this.client.fetchItems(missingIds).then((items) => {
+      return Client.fetchItems(missingIds).then((items) => {
         if (items.length) {
           return this.store.saveAll(items).then((ids) => {
             return resolve(items.concat(foundItems))

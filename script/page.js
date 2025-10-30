@@ -12,29 +12,33 @@ class Page extends HTMLElement {
     )
   }
 
-  onLoadMore({ target }) {
+  static onLoadMore({ target }) {
     const post = target.parentElement
     const loadButton = post.querySelector('& > button')
-    const totalKids = post.querySelectorAll('& > details')?.length || 0
+    const numChildPosts = post.querySelectorAll('& > details')?.length || 0
     const itemId = post.getAttribute('id')
-    const kidsLength = Number(post.getAttribute('data-kids'))
+    const numItemKids = Number(post.getAttribute('data-kids'))
+    const numKidsToFetch = numItemKids - numChildPosts
+    const remaining = numKidsToFetch > 0 ? numKidsToFetch : 0
+    post.setAttribute('data-kids', remaining)
+
+    if (remaining === 0 && loadButton) {
+      loadButton.remove()
+    }
+
     post.dispatchEvent(
       new CustomEvent('load', {
         bubbles: true,
         detail: {
-          cursor: totalKids === 0 ? 0 : totalKids - 1,
+          cursor: numChildPosts === 0 ? 0 : numChildPosts - 1,
           count: 3,
           resource: Number(itemId),
         },
       })
     )
-
-    if (kidsLength - 1 === totalKids && loadButton) {
-      loadButton.remove()
-    }
   }
 
-  onExpand(event) {
+  static onExpand(event) {
     event.stopImmediatePropagation()
     const details = event.currentTarget
     const moreButton = details.querySelector('& > button')
@@ -43,12 +47,12 @@ class Page extends HTMLElement {
     }
   }
 
-  render(parent) {
+  static render(parent) {
     return (items) => {
       const moreButton = parent.querySelector('& > button')
 
       items.forEach((item) => {
-        const post = this.renderItem(item)
+        const post = Page.renderItem(item)
         if (moreButton) {
           parent.insertBefore(post, moreButton)
         } else {
@@ -58,7 +62,7 @@ class Page extends HTMLElement {
     }
   }
 
-  renderItem(item) {
+  static renderItem(item) {
     const details = document.createElement('details')
     const summary = document.createElement('summary')
     const section = document.createElement('section')
@@ -92,8 +96,8 @@ class Page extends HTMLElement {
       moreButton.textContent = 'Comments'
       details.append(moreButton)
 
-      moreButton.addEventListener('click', this.onLoadMore)
-      details.addEventListener('click', this.onExpand)
+      moreButton.addEventListener('click', Page.onLoadMore)
+      details.addEventListener('click', Page.onExpand)
     }
 
     return details

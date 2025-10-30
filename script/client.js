@@ -1,10 +1,10 @@
 class Resource {
   static Top = new Resource('topstories')
   static New = new Resource('newstories')
-  static Best = new Resource('beststories')
   static Ask = new Resource('askstories')
-  static Show = new Resource('showstories')
   static Job = new Resource('jobstories')
+  static Best = new Resource('beststories')
+  static Show = new Resource('showstories')
 
   constructor(url) {
     this.url = url
@@ -12,28 +12,28 @@ class Resource {
 }
 
 class Client {
-  fetchIds(endpoint) {
-    return fetch(this.getUrl(endpoint)).then(this.receive).catch(this.logError)
+  static fetchIds(endpoint) {
+    return fetch(Client.getUrl(endpoint)).then(Client.receive).catch(this.logError)
   }
 
-  fetchItems(ids) {
+  static fetchItems(ids) {
     const xhrCalls = []
     for (let i = 0; i < ids.length; i++) {
       xhrCalls.push(
-        fetch(this.getUrl(`item/${ids[i]}`))
-          .then(this.receive)
-          .then(this.normalize)
+        fetch(Client.getUrl(`item/${ids[i]}`))
+          .then(Client.receive)
+          .then(Client.normalize)
       )
     }
 
     return Promise.all(xhrCalls)
   }
 
-  getUrl(uri) {
+  static getUrl(uri) {
     return `https://hacker-news.firebaseio.com/v0/${uri}.json`
   }
 
-  receive(response) {
+  static receive(response) {
     if (!response.ok) {
       throw new Error(`Item fetch Error: ${response.status}`)
     }
@@ -41,7 +41,7 @@ class Client {
     return response.json()
   }
 
-  normalize(data) {
+  static normalize(data) {
     return data
   }
 
