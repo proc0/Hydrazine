@@ -1,6 +1,6 @@
 html {
   box-sizing: border-box;
-  background-color: #222;
+  background-color: #191919;
   color: #ccc;
   font-family: Sans-serif;
   font-size: 0.18in;
@@ -43,7 +43,7 @@ details {
     border-top: 1px solid #525252ff;
 
     h1,
-    span {
+    h2 {
       font-weight: normal;
       margin: 0;
     }
@@ -53,9 +53,20 @@ details {
       padding: 1rem;
     }
 
-    span {
+    h2 {
       line-height: 1.2rem;
       padding: 1rem 1rem 0 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+
+      span {
+        font-weight: bold;
+        color: #e07700de;
+      }
+
+      &::after {
+        content: '⊟';
+      }
     }
   }
 
@@ -70,10 +81,26 @@ details {
   }
 }
 
-details:not(open) {
+details[open] {
   summary {
-    span {
+    h2 {
+      padding-bottom: 0.5rem;
+
+      &::after {
+        content: '[─]';
+      }
+    }
+  }
+}
+
+details:not([open]) {
+  summary {
+    h2 {
       padding: 1rem;
+
+      &::after {
+        content: '[🞤]';
+      }
     }
   }
 }

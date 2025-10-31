@@ -7,7 +7,7 @@ class Page extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent('load', {
         bubbles: true,
-        detail: { cursor: 0, count: 3, resource: Resource.Top },
+        detail: { cursor: 0, count: 5, resource: Resource.Top },
       })
     )
   }
@@ -75,9 +75,11 @@ class Page extends HTMLElement {
       title.textContent = item.title
       summary.append(title)
     } else {
-      const subtitle = document.createElement('span')
-      const commentDate = new Date(item.time)
-      subtitle.textContent = `${item.by} ${commentDate.toLocaleString()}`
+      const subtitle = document.createElement('h2')
+      const username = document.createElement('span')
+      username.textContent = item.by
+      subtitle.textContent = ` ⏲ ${Page.ellapse(item.time * 1000, Date.now())} `
+      subtitle.prepend(username)
       summary.append(subtitle)
       details.setAttribute('open', '')
     }
@@ -93,7 +95,7 @@ class Page extends HTMLElement {
 
     if (item.kids?.length > 0) {
       const moreButton = document.createElement('button')
-      moreButton.textContent = '⇊⇊⇊'
+      moreButton.textContent = `⇊ (+${item.kids.length}) ⇊`
       details.append(moreButton)
 
       moreButton.addEventListener('click', Page.onLoadMore)
@@ -101,5 +103,46 @@ class Page extends HTMLElement {
     }
 
     return details
+  }
+
+  static ellapse(begin, end) {
+    // Get the time difference in milliseconds
+    let timeDifferenceMS = end - begin
+    const startDate = new Date(begin)
+    const endDate = new Date(end)
+
+    // Check if either of the start or end date is in DST and
+    // adjust the DST offset accordingly.
+    if (
+      endDate.getTimezoneOffset() < startDate.getTimezoneOffset() ||
+      (startDate.getTimezoneOffset() < endDate.getTimezoneOffset() && startDate < endDate)
+    ) {
+      // Adjust for the DST transition
+      const dstTransition = endDate.getTimezoneOffset() - startDate.getTimezoneOffset()
+      timeDifferenceMS -= dstTransition * 60 * 1000
+    }
+
+    // Calculate the elapsed time in seconds, minutes, hours, and days
+    // const timeDifferenceSecs = Math.floor(timeDifferenceMS / 1000)
+    const timeDifferenceMins = Math.floor(timeDifferenceMS / 60000)
+    const timeDifferenceHours = Math.floor(timeDifferenceMS / 3600000)
+    const timeDifferenceDays = Math.floor(timeDifferenceMS / 86400000)
+
+    // console.log(`Time difference in milliseconds: ${timeDifferenceMS}`)
+    // console.log(`Time difference in seconds: ${timeDifferenceSecs}`)
+    // console.log(`Time difference in minutes: ${timeDifferenceMins}`)
+    // console.log(`Time difference in hours: ${timeDifferenceHours}`)
+    // console.log(`Time difference in days: ${timeDifferenceDays}`)
+
+    let ellapsedTime = ''
+    if (timeDifferenceMins < 60) {
+      ellapsedTime = `${timeDifferenceMins} minutes`
+    } else if (timeDifferenceHours < 24) {
+      ellapsedTime = `${timeDifferenceHours} hours`
+    } else {
+      ellapsedTime = `${timeDifferenceDays} days`
+    }
+
+    return ellapsedTime
   }
 }

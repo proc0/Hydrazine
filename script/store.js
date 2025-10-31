@@ -2,7 +2,7 @@ class Store {
   static DB_NAME = 'hydrazine'
   static STORE_NAME = 'items'
   static VERSION = 1
-  static CACHE_LIFE = 15 * 60 * 1000
+  static CACHE_LIFE = 5 * 60 * 1000
 
   constructor() {
     const openRequest = window.indexedDB.open(Store.DB_NAME, Store.VERSION)
