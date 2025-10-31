@@ -18,12 +18,15 @@ class Page extends HTMLElement {
     const numChildPosts = post.querySelectorAll('& > details')?.length || 0
     const itemId = post.getAttribute('id')
     const numItemKids = Number(post.getAttribute('data-kids'))
+
     const numKidsToFetch = numItemKids - numChildPosts
-    const remaining = numKidsToFetch > 0 ? numItemKids - numKidsToFetch : 0
+    const remaining = numKidsToFetch > 0 ? numKidsToFetch - 3 : 0
     post.setAttribute('data-kids', remaining)
 
     if (remaining === 0 && loadButton) {
       loadButton.remove()
+    } else {
+      loadButton.textContent = `⇊ (+${remaining}) ⇊`
     }
 
     post.dispatchEvent(
@@ -72,7 +75,7 @@ class Page extends HTMLElement {
 
     if (item.title) {
       const title = document.createElement('h1')
-      title.textContent = item.title
+      title.textContent = `${item.score}/🗨${item.descendants} ${item.title}`
       summary.append(title)
     } else {
       const subtitle = document.createElement('h2')
