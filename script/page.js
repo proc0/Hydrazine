@@ -93,7 +93,7 @@ class Page extends HTMLElement {
 
     if (item.kids?.length > 0) {
       const moreButton = document.createElement('button')
-      moreButton.textContent = 'Comments'
+      moreButton.textContent = '⇊⇊⇊'
       details.append(moreButton)
 
       moreButton.addEventListener('click', Page.onLoadMore)

@@ -1,22 +1,95 @@
+html {
+  box-sizing: border-box;
+  background-color: #222;
+  color: #ccc;
+  font-family: Sans-serif;
+  font-size: 0.18in;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  box-sizing: border-box;
-  background-color: #222;
-  color: #eee;
+}
+
+main {
+  margin: 2rem;
+
+  & hz-page > details:last-child {
+    border-bottom: 1px solid #525252ff;
+  }
+
+  & hz-page > details > section {
+    border-top: 1px solid #525252ff;
+    padding: 1rem;
+  }
+
+  & hz-page > details {
+    border-right: 1px solid #525252ff;
+  }
+
+  & hz-page > details > summary h1 {
+    color: #dddddd;
+  }
 }
 
 details {
   display: flex;
   flex-direction: column;
-  margin-left: 2rem;
+  border-left: 1px solid #525252ff;
+  margin-left: 1rem;
 
   summary {
     display: inline-flex;
+    border-top: 1px solid #525252ff;
+
+    h1,
+    span {
+      font-weight: normal;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      padding: 1rem;
+    }
+
+    span {
+      line-height: 1.2rem;
+      padding: 1rem 1rem 0 1rem;
+    }
+  }
+
+  section:empty {
+    padding: 0;
+    margin-bottom: 1rem;
   }
 
   section {
     display: flex;
-    flex-direction: column;
+    padding: 0 1rem 1rem 1rem;
+  }
+}
+
+details:not(open) {
+  summary {
+    span {
+      padding: 1rem;
+    }
+  }
+}
+
+button {
+  appearance: none;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #525252ff;
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 100%;
+
+  &:hover {
+    background-color: #313131ff;
   }
 }
